@@ -3,7 +3,9 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# Write directly to the app
+# ---------------------------
+# APP HEADER
+# ---------------------------
 st.title(":cup_with_straw: Customize Your Smoothie!:cup_with_straw:")
 st.write("Choose the fruits you want in your custom Smoothie!")
 
@@ -19,7 +21,14 @@ st.write('The name on your Smoothie will be:', name_on_order)
 cnx = st.connection("snowflake")
 session = cnx.session()
 
-# Use direct SQL (more stable than Snowpark select(col()))
+# 🔥 FORCE CONTEXT (this fixes most Streamlit Snowflake issues)
+session.sql("USE DATABASE smoothies").collect()
+session.sql("USE SCHEMA public").collect()
+session.sql("USE WAREHOUSE COMPUTE_WH").collect()
+
+# ---------------------------
+# GET DATA FROM SNOWFLAKE (SAFE SQL)
+# ---------------------------
 my_dataframe = session.sql("""
     SELECT FRUIT_NAME, SEARCH_ON
     FROM smoothies.public.fruit_options
@@ -28,11 +37,11 @@ my_dataframe = session.sql("""
 # Convert to pandas
 pd_df = my_dataframe.to_pandas()
 
-# Debug view (safe)
+# Debug view
 st.dataframe(pd_df, use_container_width=True)
 
 # ---------------------------
-# MULTISELECT (must use pandas list)
+# MULTISELECT
 # ---------------------------
 ingredients_list = st.multiselect(
     'Choose up to 5 ingredients:',
@@ -41,7 +50,7 @@ ingredients_list = st.multiselect(
 )
 
 # ---------------------------
-# PROCESS SELECTION
+# PROCESS SELECTIONS
 # ---------------------------
 if ingredients_list:
 
@@ -50,7 +59,7 @@ if ingredients_list:
     for fruit_chosen in ingredients_list:
         ingredients_string += fruit_chosen + ' '
 
-        # Get SEARCH_ON safely
+        # Safe lookup for SEARCH_ON
         match = pd_df[pd_df['FRUIT_NAME'] == fruit_chosen]
 
         if not match.empty:
@@ -58,9 +67,7 @@ if ingredients_list:
         else:
             search_on = "Not found"
 
-        st.write(
-            f"The search value for {fruit_chosen} is {search_on}."
-        )
+        st.write(f"The search value for {fruit_chosen} is {search_on}.")
 
         # API call
         st.subheader(f"{fruit_chosen} Nutrition Information")
@@ -75,14 +82,12 @@ if ingredients_list:
             st.error(f"API error for {fruit_chosen}: {e}")
 
     # ---------------------------
-    # ORDER INSERT
+    # ORDER SUBMISSION
     # ---------------------------
     st.write("---")
     st.write("### Submit your order")
 
-    time_to_insert = st.button('Submit Order')
-
-    if time_to_insert:
+    if st.button('Submit Order'):
 
         my_insert_stmt = f"""
             INSERT INTO smoothies.public.orders

@@ -13,16 +13,10 @@ st.write(
 name_on_order = st.text_input('Name on Smoothie:')
 st.write('The name on your Smoothie will be:', name_on_order)
 
-st.write("Connected!")
-
-test_df = session.sql("""
-SELECT CURRENT_ROLE(),
-       CURRENT_DATABASE(),
-       CURRENT_SCHEMA(),
-       CURRENT_WAREHOUSE()
-""")
-
-st.dataframe(test_df)
+cnx = st.connection("snowflake")
+session = cnx.session()
+my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'),col('SEARCH_ON'))
+st.dataframe(data=my_dataframe, use_container_width=True)
 st.stop()
 
 ingredients_list = st.multiselect(
@@ -55,7 +49,3 @@ if ingredients_list:
         session.sql(my_insert_stmt).collect()
         
         st.success('Your Smoothie is ordered, ' + name_on_order + '!', icon="✅")
-
-
-
-

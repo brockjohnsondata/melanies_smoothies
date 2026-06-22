@@ -55,25 +55,13 @@ if ingredients_list:
         # ---------------------------
         # SEARCH_ON VALUE (FINISHING TOUCHES REQUIREMENT)
         # ---------------------------
-        match = pd_df[pd_df["FRUIT_NAME"] == fruit_chosen]
+        search_on=pd_df.loc[pd_df['FRUIT_NAME'] == fruit_chosen, 'SEARCH_ON'].iloc[0]
+        # st.write('The search value for ', {fruit_chosen},' is ', search_on, '.')
 
-        search_on = match["SEARCH_ON"].iloc[0] if not match.empty else "Not found"
-
-        st.write(f"Search value for {fruit_chosen}: {search_on}")
-
-        # ---------------------------
-        # API CALL (FIXED URL)
-        # ---------------------------
-        try:
-            response = requests.get(
-                f"https://my.smoothiefroot.com/api/fruit/{fruit_chosen}"
-            )
-
-            st.subheader(f"{fruit_chosen} Nutrition Information")
-            st.dataframe(response.json(), use_container_width=True)
-
-        except Exception as e:
-            st.error(f"API error for {fruit_chosen}: {e}")
+        st.subheader(fruit_chosen + ' Nutrition Information')
+        smoothiefroot_response = requests.get(f"https://my.smoothiefroot.com/api/fruit/{search_on}")
+        sf_df = st.dataframe(data=smoothiefroot_response.json(), use_container_width=True)
+        
 
     # ---------------------------
     # SUBMIT ORDER TO SNOWFLAKE

@@ -17,14 +17,14 @@ cnx = st.connection("snowflake")
 session = cnx.session()
 
 # Build Snowpark DataFrame
-my_dataframe = session.table("smoothies.public.fruit_options") \
-    .select(col('FRUIT_NAME'), col('SEARCH_ON'))
+my_dataframe = session.table("smoothies.public.fruit_options").select(col('FRUIT_NAME'), col('SEARCH_ON'))
+# st.dataframe(data=my_dataframe, use_container_width=True)
+# st.stop()
 
 # Convert to pandas (IMPORTANT for multiselect + lookup)
 pd_df = my_dataframe.to_pandas()
-
-# Show table (optional)
-st.dataframe(data=pd_df, use_container_width=True)
+st.dataframe(pd_df)
+st.stop()
 
 # ✅ Multiselect MUST use a list, not Snowpark DF
 ingredients_list = st.multiselect(
